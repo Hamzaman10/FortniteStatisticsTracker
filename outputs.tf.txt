@@ -1,0 +1,16 @@
+output "data_bucket" {
+value = aws_s3_bucket.datalake.bucket
+description = "S3 bucket for data lake"
+}
+
+
+output "glue_database" {
+value = aws_glue_catalog_database.db.name
+description = "Glue database name"
+}
+
+
+output "athena_workgroup" {
+value = aws_athena_workgroup.wg.name
+description = "Athena workgroup"
+}

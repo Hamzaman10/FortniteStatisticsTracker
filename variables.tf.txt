@@ -1,0 +1,40 @@
+variable "project_prefix" {
+description = "Name prefix for resources"
+type = string
+default = "fortnite-etl"
+}
+
+
+variable "aws_region" {
+description = "AWS region"
+type = string
+default = "us-east-1"
+}
+
+
+variable "fortnite_api_base" {
+description = "Fortnite API base URL (no trailing slash)"
+type = string
+}
+
+
+variable "fortnite_api_path" {
+description = "Fortnite API path (e.g., /v2/cosmetics/br)"
+type = string
+default = "/v2/cosmetics/br"
+}
+
+
+variable "fortnite_api_key" {
+description = "API key if required (leave blank if not)"
+type = string
+default = ""
+sensitive = true
+}
+
+
+variable "fetch_schedule" {
+description = "EventBridge schedule expression"
+type = string
+default = "rate(15 minutes)"
+}
