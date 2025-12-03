@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Cognito Account Manager</title>
+</head>
+
+<body>
+<h2>Cognito Account Manager</h2>
+
+<button onclick="login()">Login</button>
+<button onclick="logout()">Logout</button>
+
+<h3>Your Profile</h3>
+<pre id="profile"></pre>
+
+<h3>Update Profile</h3>
+<input id="username" placeholder="user name">
+<input id="gameid" placeholder="game id">
+<button onclick="updateProfile()">Update</button>
+
+<!-- Load configuration first -->
+<script src="config.js"></script>
+
+<script>
+// ------------------------------------------------------
+// USE CONFIG FROM config.js
+// ------------------------------------------------------
+const DOMAIN = window.APP_CONFIG.DOMAIN;
+const CLIENT_ID = window.APP_CONFIG.CLIENT_ID;
+const BACKEND_URL = window.APP_CONFIG.BACKEND_URL;
+const REDIRECT = window.APP_CONFIG.REDIRECT;
+
+// Parse ID token after redirect from Cognito Hosted UI
+let idToken = null;
+
+if (window.location.hash.includes("id_token")) {
+    idToken = window.location.hash.split("id_token=")[1].split("&")[0];
+    loadProfile();
+}
+
+// ------------------------------------------------------
+// LOGIN / LOGOUT
+// ------------------------------------------------------
+function login() {
+    const url =
+        `${DOMAIN}/login?client_id=${CLIENT_ID}` +
+        `&response_type=token` +
+        `&redirect_uri=${encodeURIComponent(REDIRECT)}`;
+    window.location = url;
+}
+
+function logout() {
+    const url =
+        `${DOMAIN}/logout?client_id=${CLIENT_ID}` +
+        `&logout_uri=${encodeURIComponent(REDIRECT)}`;
+    window.location = url;
+}
+
+// ------------------------------------------------------
+// GET PROFILE
+// ------------------------------------------------------
+function loadProfile() {
+    if (!idToken) {
+        document.getElementById("profile").innerText = "Not logged in";
+        return;
+    }
+
+    fetch(`${BACKEND_URL}/profile`, {
+        headers: {
+            "Authorization": "Bearer " + idToken
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById("profile").innerText =
+            JSON.stringify(data, null, 2);
+    })
+    .catch(err => console.error("Profile fetch error:", err));
+}
+
+// ------------------------------------------------------
+// UPDATE PROFILE
+// ------------------------------------------------------
+function updateProfile() {
+    if (!idToken) {
+        alert("Please login first");
+        return;
+    }
+
+    const body = {
+        user_name: document.getElementById("username").value,
+        gameid: document.getElementById("gameid").value,
+    };
+
+    fetch(`${BACKEND_URL}/profile`, {
+        method: "PUT",
+        headers: {
+            "Authorization": "Bearer " + idToken,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+    })
+    .then(r => r.json())
+    .then(() => loadProfile())
+    .catch(err => console.error("Update error:", err));
+}
+</script>
+
+</body>
+</html>
