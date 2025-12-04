@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fortnite
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: fortnite
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: fortnite-backend:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: REGION
+              value: "us-east-1"
+            - name: USERPOOL_ID
+              value: "us-east-1_E6fMdAZ3w"
+            - name: CLIENT_ID
+              value: "42mmtdd2opcrbo6ojtvifafko"
+            - name: COGNITO_DOMAIN
+              value: "https://auth-533267097584-us-east-1.auth.us-east-1.amazonaws.com"
+            - name: BACKEND_URL
+              value: "http://localhost:8000"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: fortnite
+spec:
+  type: ClusterIP
+  selector:
+    app: backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000

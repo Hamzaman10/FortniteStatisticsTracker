@@ -1,110 +1,134 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Cognito Account Manager</title>
+    <title>Fortnite Stats – Home</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="config.js"></script>
 </head>
 
 <body>
-<h2>Cognito Account Manager</h2>
 
-<button onclick="login()">Login</button>
-<button onclick="logout()">Logout</button>
+<header>
+    <div class="logo">Fortnite Stats</div>
 
-<h3>Your Profile</h3>
-<pre id="profile"></pre>
+    <div class="auth-buttons">
+        <button id="loginBtn" class="btn">Login</button>
+        <button id="logoutBtn" class="btn" style="display:none;">Logout</button>
+    </div>
+</header>
 
-<h3>Update Profile</h3>
-<input id="username" placeholder="user name">
-<input id="gameid" placeholder="game id">
-<button onclick="updateProfile()">Update</button>
+<section class="hero">
+    <h1>Track Your Fortnite Performance</h1>
+    <p>Sign in to access personalized match stats, player history, and performance analytics.</p>
+</section>
 
-<!-- Load configuration first -->
-<script src="config.js"></script>
+<section id="profileSection" class="profile-container">
+    <h2>Welcome back!</h2>
+    <div class="username-display">
+        Logged in as: <span id="userDisplay"></span>
+    </div>
+</section>
+
+<section id="fnSection" class="fn-container">
+    <h2>Link Your Fortnite Username</h2>
+    <input type="text" id="fnInput" placeholder="Enter Fortnite username">
+    <button class="btn" id="saveFnBtn">Save</button>
+    <div id="fnStatus" class="status"></div>
+</section>
 
 <script>
-// ------------------------------------------------------
-// USE CONFIG FROM config.js
-// ------------------------------------------------------
-const DOMAIN = window.APP_CONFIG.DOMAIN;
-const CLIENT_ID = window.APP_CONFIG.CLIENT_ID;
-const BACKEND_URL = window.APP_CONFIG.BACKEND_URL;
-const REDIRECT = window.APP_CONFIG.REDIRECT;
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const profileSection = document.getElementById("profileSection");
+const userDisplay = document.getElementById("userDisplay");
+const fnSection = document.getElementById("fnSection");
+const fnInput = document.getElementById("fnInput");
+const saveFnBtn = document.getElementById("saveFnBtn");
+const fnStatus = document.getElementById("fnStatus");
 
-// Parse ID token after redirect from Cognito Hosted UI
-let idToken = null;
+let currentProfile = null;
 
-if (window.location.hash.includes("id_token")) {
-    idToken = window.location.hash.split("id_token=")[1].split("&")[0];
+function getIdToken() {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    return params.get("id_token");
+}
+
+const idToken = getIdToken();
+
+// LOGIN
+loginBtn.onclick = () => {
+    const url = `${window.APP_CONFIG.DOMAIN}/login?client_id=${window.APP_CONFIG.CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(window.APP_CONFIG.REDIRECT)}`;
+    window.location.href = url;
+};
+
+// LOGOUT
+logoutBtn.onclick = () => {
+    const logoutUrl = `${window.APP_CONFIG.DOMAIN}/logout?client_id=${window.APP_CONFIG.CLIENT_ID}&logout_uri=${encodeURIComponent(window.APP_CONFIG.REDIRECT)}`;
+    window.location.href = logoutUrl;
+};
+
+async function loadProfile() {
+    try {
+        const res = await fetch(window.APP_CONFIG.BACKEND_URL + "/profile", {
+            headers: {
+                "Authorization": "Bearer " + idToken
+            }
+        });
+        const data = await res.json();
+        currentProfile = data;
+
+        // Display some name
+        const fallbackName = data.user_name || data.user_id || "Unknown user";
+        userDisplay.textContent = fallbackName;
+
+        // Pre-fill Fortnite username from gameid
+        fnInput.value = data.gameid || "";
+    } catch (e) {
+        console.error("Failed to load profile", e);
+        fnStatus.textContent = "Failed to load profile";
+    }
+}
+
+async function saveFortniteUsername() {
+    if (!idToken) return;
+    fnStatus.textContent = "Saving...";
+
+    const body = {
+        user_name: (currentProfile && currentProfile.user_name) || null,
+        gameid: fnInput.value
+    };
+
+    try {
+        const res = await fetch(window.APP_CONFIG.BACKEND_URL + "/profile", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + idToken
+            },
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        fnStatus.textContent = "Saved!";
+        currentProfile = data.user;
+    } catch (e) {
+        console.error("Failed to save Fortnite username", e);
+        fnStatus.textContent = "Error saving username";
+    }
+}
+
+if (idToken) {
+    // Logged in
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-block";
+    profileSection.style.display = "block";
+    fnSection.style.display = "block";
+
     loadProfile();
 }
 
-// ------------------------------------------------------
-// LOGIN / LOGOUT
-// ------------------------------------------------------
-function login() {
-    const url =
-        `${DOMAIN}/login?client_id=${CLIENT_ID}` +
-        `&response_type=token` +
-        `&redirect_uri=${encodeURIComponent(REDIRECT)}`;
-    window.location = url;
-}
-
-function logout() {
-    const url =
-        `${DOMAIN}/logout?client_id=${CLIENT_ID}` +
-        `&logout_uri=${encodeURIComponent(REDIRECT)}`;
-    window.location = url;
-}
-
-// ------------------------------------------------------
-// GET PROFILE
-// ------------------------------------------------------
-function loadProfile() {
-    if (!idToken) {
-        document.getElementById("profile").innerText = "Not logged in";
-        return;
-    }
-
-    fetch(`${BACKEND_URL}/profile`, {
-        headers: {
-            "Authorization": "Bearer " + idToken
-        }
-    })
-    .then(r => r.json())
-    .then(data => {
-        document.getElementById("profile").innerText =
-            JSON.stringify(data, null, 2);
-    })
-    .catch(err => console.error("Profile fetch error:", err));
-}
-
-// ------------------------------------------------------
-// UPDATE PROFILE
-// ------------------------------------------------------
-function updateProfile() {
-    if (!idToken) {
-        alert("Please login first");
-        return;
-    }
-
-    const body = {
-        user_name: document.getElementById("username").value,
-        gameid: document.getElementById("gameid").value,
-    };
-
-    fetch(`${BACKEND_URL}/profile`, {
-        method: "PUT",
-        headers: {
-            "Authorization": "Bearer " + idToken,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(body)
-    })
-    .then(r => r.json())
-    .then(() => loadProfile())
-    .catch(err => console.error("Update error:", err));
-}
+saveFnBtn.onclick = saveFortniteUsername;
 </script>
 
 </body>

@@ -1,0 +1,97 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: #0e0e0e;
+    color: #ffffff;
+}
+
+/* HEADER */
+header {
+    background: #1a1a1a;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #2c2c2c;
+}
+
+.logo {
+    font-size: 28px;
+    font-weight: bold;
+    color: #4db8ff;
+}
+
+.btn {
+    padding: 10px 20px;
+    margin-left: 12px;
+    background: #4db8ff;
+    border: none;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.btn:hover {
+    background: #36a3f5;
+}
+
+/* HERO SECTION */
+.hero {
+    text-align: center;
+    margin-top: 80px;
+}
+
+.hero h1 {
+    font-size: 48px;
+    margin-bottom: 12px;
+    color: #4db8ff;
+}
+
+.hero p {
+    font-size: 20px;
+    color: #cccccc;
+    max-width: 700px;
+    margin: auto;
+}
+
+/* PROFILE SECTION */
+.profile-container {
+    display: none;
+    text-align: center;
+    margin-top: 50px;
+    padding: 20px;
+    background: #1a1a1a;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 8px;
+    border: 1px solid #2c2c2c;
+}
+
+.username-display {
+    font-size: 20px;
+    margin-top: 10px;
+}
+
+/* FORTNITE USERNAME SECTION */
+.fn-container {
+    display: none;
+    text-align: center;
+    margin-top: 30px;
+}
+
+#fnInput {
+    padding: 10px;
+    width: 260px;
+    border-radius: 6px;
+    border: none;
+    margin-right: 10px;
+}
+
+.status {
+    margin-top: 10px;
+    color: #4db8ff;
+    font-size: 16px;
+}

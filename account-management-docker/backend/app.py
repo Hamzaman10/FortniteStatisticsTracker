@@ -10,8 +10,8 @@ import requests
 import os
 
 REGION = os.getenv("REGION", "us-east-1")
-USERPOOL_ID = os.getenv("USERPOOL_ID", "<YOUR_USERPOOLID>")
-APP_CLIENT_ID = os.getenv("CLIENT_ID", "<YOUR_CLIENTID>")
+USERPOOL_ID = os.getenv("USERPOOL_ID")
+APP_CLIENT_ID = os.getenv("CLIENT_ID")
 
 JWKS_URL = f"https://cognito-idp.{REGION}.amazonaws.com/{USERPOOL_ID}/.well-known/jwks.json"
 
@@ -68,7 +68,7 @@ def get_profile(request: Request):
     return db.get(user_id, {"user_id": user_id, "user_name": None, "gameid": None})
 
 @app.put("/profile")
-def put_profile(request: Request):
+async def put_profile(request: Request):
     token = request.headers.get("Authorization")
     if not token:
         raise HTTPException(401, "Missing token")
@@ -77,7 +77,7 @@ def put_profile(request: Request):
     claims = verify_token(token)
     user_id = claims["sub"]
 
-    body = json.loads(request.body().decode())
+    body = await request.json()   # FIXED LINE
 
     db = load_db()
     db[user_id] = {
