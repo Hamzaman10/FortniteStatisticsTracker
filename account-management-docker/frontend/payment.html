@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Payment Method</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="config.js"></script>
+    <script src="payment.js" defer></script>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">Fortnite <span>Stats</span></div>
+    <a href="index.html" class="btn">Back to Dashboard</a>
+</header>
+
+<section class="hero">
+    <h1>Payment Method</h1>
+    <p>Securely manage your payment details for premium features.</p>
+</section>
+
+<section class="profile-container">
+    <h2>Add New Card</h2>
+
+    <input type="text" id="name_on_card" placeholder="Cardholder Name">
+    <input type="text" id="card_number" placeholder="Card Number (0000 0000 0000 0000)">
+
+    <div class="form-row">
+        <div class="form-group">
+            <input type="number" id="exp_month" placeholder="MM">
+        </div>
+        <div class="form-group">
+            <input type="number" id="exp_year" placeholder="YYYY">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <input type="text" id="billing_zip" placeholder="Zip / Postal Code">
+        </div>
+        <div class="form-group">
+            <input type="text" id="billing_country" placeholder="Country">
+        </div>
+    </div>
+
+    <button class="btn" id="saveCardBtn" style="width: 100%;">Save Payment Method</button>
+    <div id="paymentStatus" class="status"></div>
+</section>
+
+<section class="profile-container">
+    <h2>Saved Cards</h2>
+    <div id="savedCards">
+        <p style="color:#555; font-style: italic;">Loading cards...</p>
+    </div>
+</section>
+
+<script>
+    // This overrides the simple <p> render in your payment.js with the nice HTML
+    // We will inject this logic when we move the files in the next step.
+</script>
+
+</body>
+</html>

@@ -2,36 +2,47 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from jose import jwt, jwk
 from jose.utils import base64url_decode
 import json
 import requests
 import os
 
+# -------------------------------
+# ENVIRONMENT
+# -------------------------------
+
 REGION = os.getenv("REGION", "us-east-1")
-USERPOOL_ID = os.getenv("USERPOOL_ID", "<YOUR_USERPOOLID>")
-APP_CLIENT_ID = os.getenv("CLIENT_ID", "<YOUR_CLIENTID>")
+USERPOOL_ID = os.getenv("USERPOOL_ID")
+APP_CLIENT_ID = os.getenv("CLIENT_ID")
 
 JWKS_URL = f"https://cognito-idp.{REGION}.amazonaws.com/{USERPOOL_ID}/.well-known/jwks.json"
 
 DB_FILE = "db.json"
-
 if not os.path.exists(DB_FILE):
     with open(DB_FILE, "w") as f:
         json.dump({}, f)
 
-def load_db():
-    with open(DB_FILE, "r") as f:
-        return json.load(f)
-
-def save_db(data):
-    with open(DB_FILE, "w") as f:
-        json.dump(data, f, indent=2)
+# -------------------------------
+# FASTAPI + CORS (WIDE OPEN)
+# -------------------------------
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],          # allow everything in dev
+    allow_credentials=False,      # important with "*"
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 jwks = requests.get(JWKS_URL).json()["keys"]
+
+# -------------------------------
+# TOKEN VERIFICATION
+# -------------------------------
 
 def verify_token(token):
     headers = jwt.get_unverified_header(token)
@@ -54,6 +65,22 @@ def verify_token(token):
 
     return decoded
 
+# -------------------------------
+# DB READ/WRITE
+# -------------------------------
+
+def load_db():
+    with open(DB_FILE, "r") as f:
+        return json.load(f)
+
+def save_db(data):
+    with open(DB_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+
+# -------------------------------
+# ROUTES
+# -------------------------------
+
 @app.get("/profile")
 def get_profile(request: Request):
     token = request.headers.get("Authorization")
@@ -65,7 +92,11 @@ def get_profile(request: Request):
     user_id = claims["sub"]
 
     db = load_db()
-    return db.get(user_id, {"user_id": user_id, "user_name": None, "gameid": None})
+    return db.get(user_id, {
+        "user_id": user_id,
+        "user_name": None,
+        "gameid": None
+    })
 
 @app.put("/profile")
 def put_profile(request: Request):

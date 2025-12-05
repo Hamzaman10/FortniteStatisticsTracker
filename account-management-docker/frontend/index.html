@@ -1,109 +1,91 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Cognito Account Manager</title>
+    <title>Fortnite Stats – Home</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="config.js"></script>
 </head>
 
 <body>
-<h2>Cognito Account Manager</h2>
 
-<button onclick="login()">Login</button>
-<button onclick="logout()">Logout</button>
+<header>
+    <div class="logo">Fortnite Stats</div>
 
-<h3>Your Profile</h3>
-<pre id="profile"></pre>
+    <div class="auth-buttons">
+        <a id="paymentBtn" href="payment.html" class="btn" style="display:none;">Manage Payment</a>
 
-<h3>Update Profile</h3>
-<input id="username" placeholder="user name">
-<input id="gameid" placeholder="game id">
-<button onclick="updateProfile()">Update</button>
+        <button id="loginBtn" class="btn">Login</button>
+        <button id="logoutBtn" class="btn" style="display:none;">Logout</button>
+    </div>
+</header>
 
-<!-- Load configuration first -->
-<script src="config.js"></script>
+<section class="hero">
+    <h1>Track Your Fortnite Performance</h1>
+    <p>Sign in to access personalized match stats, player history, and performance analytics.</p>
+</section>
+
+<section id="profileSection" class="profile-container" style="display:none;">
+    <h2>Welcome back!</h2>
+    <div class="username-display">
+        Logged in as: <span id="userDisplay"></span>
+    </div>
+</section>
 
 <script>
-// ------------------------------------------------------
-// USE CONFIG FROM config.js
-// ------------------------------------------------------
-const DOMAIN = window.APP_CONFIG.DOMAIN;
-const CLIENT_ID = window.APP_CONFIG.CLIENT_ID;
-const BACKEND_URL = window.APP_CONFIG.BACKEND_URL;
-const REDIRECT = window.APP_CONFIG.REDIRECT;
+function extractToken() {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const token = params.get("id_token");
 
-// Parse ID token after redirect from Cognito Hosted UI
-let idToken = null;
+    if (token) localStorage.setItem("id_token", token);
+    return token || localStorage.getItem("id_token");
+}
 
-if (window.location.hash.includes("id_token")) {
-    idToken = window.location.hash.split("id_token=")[1].split("&")[0];
+const idToken = extractToken();
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const paymentBtn = document.getElementById("paymentBtn");
+const profileSection = document.getElementById("profileSection");
+const userDisplay = document.getElementById("userDisplay");
+
+// LOGIN
+loginBtn.onclick = () => {
+    const url = `${window.APP_CONFIG.DOMAIN}/login?client_id=${window.APP_CONFIG.CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(window.APP_CONFIG.REDIRECT)}`;
+    window.location.href = url;
+};
+
+// LOGOUT
+logoutBtn.onclick = () => {
+    localStorage.removeItem("id_token");
+    const logoutUrl = `${window.APP_CONFIG.DOMAIN}/logout?client_id=${window.APP_CONFIG.CLIENT_ID}&logout_uri=${encodeURIComponent(window.APP_CONFIG.REDIRECT)}`;
+    window.location.href = logoutUrl;
+};
+
+async function loadProfile() {
+    const token = localStorage.getItem("id_token");
+    if (!token) return;
+
+    try {
+        const res = await fetch(window.APP_CONFIG.BACKEND_URL + "/profile", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+
+        const data = await res.json();
+        const display = data.user_name || data.user_id || "User";
+        userDisplay.textContent = display;
+
+    } catch (e) {
+        userDisplay.textContent = "Profile unavailable";
+    }
+}
+
+if (idToken) {
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-block";
+    paymentBtn.style.display = "inline-block";
+    profileSection.style.display = "block";
     loadProfile();
-}
-
-// ------------------------------------------------------
-// LOGIN / LOGOUT
-// ------------------------------------------------------
-function login() {
-    const url =
-        `${DOMAIN}/login?client_id=${CLIENT_ID}` +
-        `&response_type=token` +
-        `&redirect_uri=${encodeURIComponent(REDIRECT)}`;
-    window.location = url;
-}
-
-function logout() {
-    const url =
-        `${DOMAIN}/logout?client_id=${CLIENT_ID}` +
-        `&logout_uri=${encodeURIComponent(REDIRECT)}`;
-    window.location = url;
-}
-
-// ------------------------------------------------------
-// GET PROFILE
-// ------------------------------------------------------
-function loadProfile() {
-    if (!idToken) {
-        document.getElementById("profile").innerText = "Not logged in";
-        return;
-    }
-
-    fetch(`${BACKEND_URL}/profile`, {
-        headers: {
-            "Authorization": "Bearer " + idToken
-        }
-    })
-    .then(r => r.json())
-    .then(data => {
-        document.getElementById("profile").innerText =
-            JSON.stringify(data, null, 2);
-    })
-    .catch(err => console.error("Profile fetch error:", err));
-}
-
-// ------------------------------------------------------
-// UPDATE PROFILE
-// ------------------------------------------------------
-function updateProfile() {
-    if (!idToken) {
-        alert("Please login first");
-        return;
-    }
-
-    const body = {
-        user_name: document.getElementById("username").value,
-        gameid: document.getElementById("gameid").value,
-    };
-
-    fetch(`${BACKEND_URL}/profile`, {
-        method: "PUT",
-        headers: {
-            "Authorization": "Bearer " + idToken,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(body)
-    })
-    .then(r => r.json())
-    .then(() => loadProfile())
-    .catch(err => console.error("Update error:", err));
 }
 </script>
 
