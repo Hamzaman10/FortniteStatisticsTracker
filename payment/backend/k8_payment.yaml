@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-microservice
+  labels:
+    app: payment-service
+spec:
+  replicas: 2  # Looks professional to request 2 replicas for high availability
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+      - name: payment-backend
+        # In a real scenario, this would be your ECR Image URL
+        image: 730335329528.dkr.ecr.us-east-1.amazonaws.com/fortnite-payment:latest
+        ports:
+        - containerPort: 8081
+        env:
+        - name: REGION
+          value: "us-east-1"
+        - name: DYNAMODB_TABLE
+          value: "PaymentMethods"
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
