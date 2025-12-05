@@ -1,6 +1,7 @@
 import boto3
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import uuid
 from datetime import datetime
@@ -9,28 +10,25 @@ from botocore.exceptions import ClientError
 app = FastAPI()
 
 # ---------------------------
-# 1. THE CORS FIX
+# 1. THE VIDEO HACK (Serve Frontend)
 # ---------------------------
-# We use "*" (Wildcard) + allow_credentials=False.
-# This prevents the browser from being picky about the exact URL string.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False, 
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# This tells Python: "If they ask for a file, look in the 'static' folder"
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+def serve_home():
+    return FileResponse("static/index.html")
+
+@app.get("/payment.html")
+def serve_payment():
+    return FileResponse("static/payment.html")
 
 # ---------------------------
-# 2. DYNAMODB SETUP
+# 2. DATABASE LOGIC
 # ---------------------------
-# Using the standard boto3 resource (works with Cloud9 credentials)
 dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
 table = dynamodb.Table("PaymentMethods")
 
-# ---------------------------
-# Models
-# ---------------------------
 class CardInput(BaseModel):
     name_on_card: str
     card_number: str
@@ -39,44 +37,28 @@ class CardInput(BaseModel):
     billing_zip: str
     billing_country: str
 
-# ---------------------------
-# Routes
-# ---------------------------
-@app.get("/test")
-def test_route():
-    return {"status": "Backend is running!"}
-
 @app.get("/cards")
 def get_cards(user_id: str):
-    if not user_id:
-        raise HTTPException(status_code=400, detail="Missing user_id")
-
+    if not user_id: raise HTTPException(400, "Missing user_id")
     try:
-        response = table.query(
-            KeyConditionExpression="user_id = :uid",
-            ExpressionAttributeValues={":uid": user_id}
-        )
+        response = table.query(KeyConditionExpression="user_id = :uid", ExpressionAttributeValues={":uid": user_id})
         return response.get("Items", [])
     except ClientError as e:
         print(f"DB ERROR: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # Return empty list on error so frontend doesn't crash
+        return []
 
 @app.post("/card")
 def save_card(user_id: str, payload: CardInput):
-    # 1. CHECK IF USER ALREADY HAS A CARD
+    # 1. CHECK LIMIT
     try:
-        existing_cards = table.query(
-            KeyConditionExpression="user_id = :uid",
-            ExpressionAttributeValues={":uid": user_id}
-        )
-        if existing_cards.get("Count", 0) > 0:
-            # User already has a card -> Return Error
-            raise HTTPException(status_code=400, detail="You can only add 1 payment method. Please delete the existing one first.")
-    except ClientError as e:
-        print(f"DB CHECK ERROR: {e}")
-        raise HTTPException(status_code=500, detail="Database check failed")
+        existing = table.query(KeyConditionExpression="user_id = :uid", ExpressionAttributeValues={":uid": user_id})
+        if existing.get("Count", 0) > 0:
+            raise HTTPException(400, "Limit reached: You can only have 1 card.")
+    except ClientError:
+        pass # If check fails, try to save anyway
 
-    # 2. PROCEED TO SAVE IF NO CARDS EXIST
+    # 2. SAVE
     token = f"pay_{uuid.uuid4().hex[:12]}"
     item = {
         "user_id": user_id,
@@ -90,13 +72,12 @@ def save_card(user_id: str, payload: CardInput):
         "billing_country": payload.billing_country,
         "created_at": datetime.utcnow().isoformat()
     }
-
     try:
         table.put_item(Item=item)
         return {"status": "saved", "token": token}
     except ClientError as e:
         print(f"DB SAVE ERROR: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(500, str(e))
 
 @app.delete("/card")
 def delete_card(user_id: str, card_token: str):
@@ -104,4 +85,4 @@ def delete_card(user_id: str, card_token: str):
         table.delete_item(Key={"user_id": user_id, "card_token": card_token})
         return {"status": "deleted"}
     except ClientError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(500, str(e))

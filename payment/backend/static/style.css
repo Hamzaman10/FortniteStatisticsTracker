@@ -1,0 +1,166 @@
+/* GLOBAL STYLES */
+* {
+    box-sizing: border-box; /* Ensures padding doesn't break width */
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #0e0e0e;
+    color: #e0e0e0;
+}
+
+/* HEADER */
+header {
+    background: #151515;
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #333;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 800;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.logo span {
+    color: #4db8ff; /* Fortnite Blue Accent */
+}
+
+/* BUTTONS */
+.btn {
+    padding: 10px 24px;
+    background: #4db8ff;
+    border: none;
+    color: #000;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    font-size: 14px;
+    display: inline-block;
+}
+
+.btn:hover {
+    background: #73caff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(77, 184, 255, 0.3);
+}
+
+.btn-delete {
+    background: #ff4d4d;
+    color: white;
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.btn-delete:hover {
+    background: #ff6666;
+    box-shadow: 0 4px 12px rgba(255, 77, 77, 0.3);
+}
+
+/* HERO SECTION */
+.hero {
+    text-align: center;
+    margin: 60px 0 40px;
+}
+
+.hero h1 {
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+.hero p {
+    color: #888;
+}
+
+/* CONTAINER */
+.profile-container {
+    background: #1a1a1a;
+    max-width: 500px;
+    margin: 0 auto 40px auto;
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid #2c2c2c;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+
+.profile-container h2 {
+    margin-top: 0;
+    border-bottom: 1px solid #333;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+    font-size: 20px;
+    color: #fff;
+}
+
+/* FORM INPUTS */
+input {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    background: #252525;
+    border: 1px solid #333;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+    transition: border 0.2s;
+}
+
+input:focus {
+    border-color: #4db8ff;
+}
+
+input::placeholder {
+    color: #555;
+}
+
+/* FORM LAYOUT HELPERS */
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-group {
+    flex: 1; /* Makes inputs take up equal space */
+}
+
+/* SAVED CARDS LIST */
+.saved-card-item {
+    background: #252525;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border-left: 4px solid #4db8ff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-info {
+    font-size: 14px;
+    color: #ccc;
+}
+
+.card-brand {
+    display: block;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.status {
+    margin-top: 15px;
+    font-weight: bold;
+    color: #4db8ff;
+    text-align: center;
+}

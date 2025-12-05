@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Fortnite Stats – Home</title>
-
-    <link rel="stylesheet" href="/static/style.css">
-    <script src="/static/config.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="config.js"></script>
 </head>
 
 <body>
@@ -14,7 +13,7 @@
     <div class="logo">Fortnite Stats</div>
 
     <div class="auth-buttons">
-        <a id="paymentBtn" href="/payment.html" class="btn" style="display:none;">Manage Payment</a>
+        <a id="paymentBtn" href="payment.html" class="btn" style="display:none;">Manage Payment</a>
 
         <button id="loginBtn" class="btn">Login</button>
         <button id="logoutBtn" class="btn" style="display:none;">Logout</button>
@@ -23,7 +22,7 @@
 
 <section class="hero">
     <h1>Track Your Fortnite Performance</h1>
-    <p>Sign in to access personalized match stats and analytics.</p>
+    <p>Sign in to access personalized match stats, player history, and performance analytics.</p>
 </section>
 
 <section id="profileSection" class="profile-container" style="display:none;">
@@ -81,7 +80,6 @@ async function loadProfile() {
     }
 }
 
-// TOKEN EXISTS → USER LOGGED IN
 if (idToken) {
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";

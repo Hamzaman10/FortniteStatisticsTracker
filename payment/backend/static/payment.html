@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
-head>
-  <meta charset="UTF-8" />
-  <title>Manage Payment Method</title>
-  <link rel="stylesheet" href="/static/style.css" />
-  <script src="/static/config.js"></script>
-  <script src="/static/payment.js" defer></script>
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Payment Method</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="config.js"></script>
+    <script src="payment.js" defer></script>
 </head>
 
 <body>
 
 <header>
     <div class="logo">Fortnite <span>Stats</span></div>
-    <a href="/" class="btn">Back to Dashboard</a>
+    <a href="index.html" class="btn">Back to Dashboard</a>
 </header>
 
 <section class="hero">
@@ -54,6 +54,11 @@ head>
         <p style="color:#555; font-style: italic;">Loading cards...</p>
     </div>
 </section>
+
+<script>
+    // This overrides the simple <p> render in your payment.js with the nice HTML
+    // We will inject this logic when we move the files in the next step.
+</script>
 
 </body>
 </html>
