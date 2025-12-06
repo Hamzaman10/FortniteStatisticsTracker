@@ -164,3 +164,103 @@ input::placeholder {
     color: #4db8ff;
     text-align: center;
 }
+/* SHOP GRID */
+.stats-card {
+    background: #1a1a1a;
+    border-radius: 12px;
+    border: 1px solid #2c2c2c;
+    padding: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.stats-table th,
+.stats-table td {
+    padding: 10px 14px;
+    font-size: 14px;
+}
+
+.stats-table th {
+    text-align: left;
+    border-bottom: 1px solid #333;
+    color: #aaa;
+}
+
+.stats-table tr:nth-child(even) td {
+    background: #181818;
+}
+
+/* -------- Shop layout: edge-to-edge feel -------- */
+.shop-wrapper {
+    margin: 40px 40px 80px;   /* side margin only so it feels full-width */
+}
+
+.shop-title {
+    color: #fff;
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+/* full-width responsive grid */
+.shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 24px;
+}
+
+/* shop cards grow to fill their grid cell */
+.shop-item {
+    background: #1a1a1a;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+    text-align: center;
+}
+
+.shop-item img {
+    width: 100%;
+    height: 200px;
+    object-fit: contain;     /* show entire character */
+    background: #111;        /* fills empty areas */
+    border-radius: 6px;
+}
+
+
+.item-name {
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.item-price {
+    color: #ccc;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+/* rarity borders */
+.rarity-legendary { border-left: 4px solid #ffb347; }
+.rarity-epic      { border-left: 4px solid #c77dff; }
+.rarity-rare      { border-left: 4px solid #4db8ff; }
+.rarity-uncommon  { border-left: 4px solid #3bd18a; }
+
+.wishlist-btn {
+    width: 100%;
+    padding: 8px 0;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    background: #4db8ff;
+    color: #000;
+}
+
+.wishlist-btn.disabled {
+    background: #333;
+    color: #777;
+    cursor: default;
+}

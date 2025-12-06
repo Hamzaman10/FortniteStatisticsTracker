@@ -15,6 +15,7 @@
 
     <div class="auth-buttons">
         <a id="paymentBtn" href="/payment.html" class="btn" style="display:none;">Manage Payment</a>
+        <a id="wishlistBtn" href="/wishlist.html" class="btn" style="display:none;">Wishlist</a>
 
         <button id="loginBtn" class="btn">Login</button>
         <button id="logoutBtn" class="btn" style="display:none;">Logout</button>
@@ -23,17 +24,33 @@
 
 <section class="hero">
     <h1>Track Your Fortnite Performance</h1>
-    <p>Sign in to access personalized match stats and analytics.</p>
+    <p>Sign in + have a saved payment method to see player stats.</p>
 </section>
 
-<section id="profileSection" class="profile-container" style="display:none;">
-    <h2>Welcome back!</h2>
-    <div class="username-display">
-        Logged in as: <span id="userDisplay"></span>
+
+<!-- ================= STATS SECTION ================= -->
+<section id="statsSection" class="profile-container" style="display:none; margin-top:40px;">
+    <h2>Fortnite Stats</h2>
+
+    <div class="form-row" style="align-items: center; gap: 10px;">
+        <input id="statsInput" type="text" placeholder="Enter an Epic username..." style="flex:1; padding:8px;">
+        <button id="statsBtn" class="btn">Get Stats</button>
     </div>
+
+    <div id="statsResult" class="stats-box" style="margin-top:20px;"></div>
 </section>
+
+
+<!-- ================= SHOP SECTION ================= -->
+<section id="shopSection" class="profile-container" style="margin-top:40px;">
+    <h2>Today's Fortnite Item Shop</h2>
+    <div id="shopGrid" class="shop-grid"></div>
+</section>
+
+
 
 <script>
+/* ---------------- TOKEN HANDLING ---------------- */
 function extractToken() {
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
@@ -43,51 +60,190 @@ function extractToken() {
     return token || localStorage.getItem("id_token");
 }
 
-const idToken = extractToken();
-const loginBtn = document.getElementById("loginBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-const paymentBtn = document.getElementById("paymentBtn");
-const profileSection = document.getElementById("profileSection");
-const userDisplay = document.getElementById("userDisplay");
+const idToken      = extractToken();
+const loginBtn     = document.getElementById("loginBtn");
+const logoutBtn    = document.getElementById("logoutBtn");
+const paymentBtn   = document.getElementById("paymentBtn");
+const wishlistBtn  = document.getElementById("wishlistBtn");
+const statsSection = document.getElementById("statsSection");
 
-// LOGIN
+let hasPayment = false;
+
+/* ---------------- LOGIN / LOGOUT ---------------- */
 loginBtn.onclick = () => {
-    const url = `${window.APP_CONFIG.DOMAIN}/login?client_id=${window.APP_CONFIG.CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(window.APP_CONFIG.REDIRECT)}`;
+    const url =
+        `${window.APP_CONFIG.DOMAIN}/login?client_id=${window.APP_CONFIG.CLIENT_ID}` +
+        `&response_type=token&redirect_uri=${encodeURIComponent(window.APP_CONFIG.REDIRECT)}`;
     window.location.href = url;
 };
 
-// LOGOUT
 logoutBtn.onclick = () => {
     localStorage.removeItem("id_token");
-    const logoutUrl = `${window.APP_CONFIG.DOMAIN}/logout?client_id=${window.APP_CONFIG.CLIENT_ID}&logout_uri=${encodeURIComponent(window.APP_CONFIG.REDIRECT)}`;
+    const logoutUrl =
+        `${window.APP_CONFIG.DOMAIN}/logout?client_id=${window.APP_CONFIG.CLIENT_ID}` +
+        `&logout_uri=${encodeURIComponent(window.APP_CONFIG.REDIRECT)}`;
     window.location.href = logoutUrl;
 };
 
-async function loadProfile() {
-    const token = localStorage.getItem("id_token");
-    if (!token) return;
+/* ---------------- PAYMENT CHECK ---------------- */
+function checkPayment() {
+    const raw = localStorage.getItem("saved_payment_card");
+    hasPayment = !!raw;
 
-    try {
-        const res = await fetch(window.APP_CONFIG.BACKEND_URL + "/profile", {
-            headers: { "Authorization": "Bearer " + token }
-        });
-
-        const data = await res.json();
-        const display = data.user_name || data.user_id || "User";
-        userDisplay.textContent = display;
-
-    } catch (e) {
-        userDisplay.textContent = "Profile unavailable";
-    }
+    statsSection.style.display = hasPayment ? "block" : "none";
 }
 
-// TOKEN EXISTS → USER LOGGED IN
+
+/* ---------------- FAKE SHOP DATA ---------------- */
+const SHOP_ITEMS = [
+    { name: "Renegade Raider", rarity: "legendary", price: 1200, img: "https://wallpapers.com/images/featured/renegade-raider-fortnite-b4fkaac8lpr4xbz1.jpg"},
+    { name: "Crystal", rarity: "rare", price: 800, img: "https://wallpapers.com/images/hd/crystal-skin-fortnite-xgtcb5maxprsbv93.jpg"},
+    { name: "Star Wand", rarity: "epic", price: 800, img: "https://wallpapers.com/images/hd/fortnite-pfp-focus-outfit-star-wand-vry0rt84td08bthu.jpg"},
+    { name: "Laugh It Up", rarity: "rare", price: 500, img: "https://i.ytimg.com/vi/6J_wsJo0-0E/maxresdefault.jpg"},
+    { name: "Driver", rarity: "uncommon", price: 500, img: "https://wallpapers.com/images/hd/fortnite-laptop-nq0zaer2qbmk5xh7.jpg"}
+];
+
+
+const WISHLIST_KEY = "wishlist_items";
+
+/* ---------------- WISHLIST HELPERS ---------------- */
+function getWishlist() {
+    return JSON.parse(localStorage.getItem(WISHLIST_KEY) || "[]");
+}
+
+function saveWishlist(list) {
+    localStorage.setItem(WISHLIST_KEY, JSON.stringify(list));
+}
+
+window.toggleWishlist = function(itemName) {
+    let list = getWishlist();
+
+    if (list.includes(itemName)) {
+        list = list.filter(n => n !== itemName);
+    } else {
+        list.push(itemName);
+    }
+
+    saveWishlist(list);
+    renderShop(true);
+};
+
+
+/* ---------------- RENDER SHOP ---------------- */
+function renderShop(loggedIn) {
+    const grid = document.getElementById("shopGrid");
+    const wishlist = getWishlist();
+
+    grid.innerHTML = SHOP_ITEMS.map(item => {
+        const wished = wishlist.includes(item.name);
+        return `
+            <div class="shop-item rarity-${item.rarity}">
+                <img src="${item.img}">
+                <div class="item-name">${item.name}</div>
+                <div class="item-price">${item.price} V-Bucks</div>
+
+                ${loggedIn ? `
+                    <button class="wishlist-btn" onclick="toggleWishlist('${item.name}')">
+                        ${wished ? "★ Wishlisted" : "☆ Add to Wishlist"}
+                    </button>
+                ` : `
+                    <button class="wishlist-btn disabled">Login to Wishlist</button>
+                `}
+            </div>
+        `;
+    }).join("");
+}
+
+
+/* ---------------- FAKE STATS GENERATION ---------------- */
+function generateFakeStats(username) {
+    const wins = Math.floor(Math.random() * 300);
+    const matches = wins + Math.floor(Math.random() * 600) + 100;
+    const winRate = ((wins / matches) * 100).toFixed(1);
+
+    const kills = Math.floor(Math.random() * 8000);
+    const deaths = Math.floor(Math.random() * 4000);
+    const kd = (kills / Math.max(1, deaths)).toFixed(2);
+
+    const dmgDealt = Math.floor(Math.random() * 900000);
+    const dmgTaken = Math.floor(Math.random() * 600000);
+
+    const accuracy = (Math.random() * 30 + 15).toFixed(1);
+    const headshots = Math.floor(kills * (Math.random() * 0.25));
+    const assists = Math.floor(Math.random() * 800);
+    const revives = Math.floor(Math.random() * 200);
+
+    const hoursPlayed = Math.floor(Math.random() * 600);
+    const matchesPerDay = (matches / (Math.random() * 60 + 20)).toFixed(1);
+    const scorePerMinute = Math.floor(Math.random() * 600 + 200);
+
+    function color(v, good, bad) {
+        if (v >= good) return "#4db8ff";
+        if (v <= bad) return "#ff4d4d";
+        return "#e0e0e0";
+    }
+
+    return `
+        <h3 style="text-align:center; margin-bottom:20px; color:#4db8ff; font-size:22px;">
+            Stats for ${username}
+        </h3>
+
+        <table class="stats-table">
+            <tr><th>Stat</th><th>Value</th></tr>
+
+            <tr><td>Wins</td><td style="color:${color(wins,150,40)}">${wins}</td></tr>
+            <tr><td>Total Matches</td><td>${matches}</td></tr>
+            <tr><td>Win Rate</td><td style="color:${color(winRate,25,5)}">${winRate}%</td></tr>
+
+            <tr><td>Kills</td><td style="color:${color(kills,3000,400)}">${kills}</td></tr>
+            <tr><td>Deaths</td><td>${deaths}</td></tr>
+            <tr><td>K/D</td><td style="color:${color(kd,3,0.7)}">${kd}</td></tr>
+
+            <tr><td>Damage Dealt</td><td style="color:${color(dmgDealt,500000,100000)}">${dmgDealt.toLocaleString()}</td></tr>
+            <tr><td>Damage Taken</td><td>${dmgTaken.toLocaleString()}</td></tr>
+
+            <tr><td>Accuracy</td><td style="color:${color(accuracy,30,18)}">${accuracy}%</td></tr>
+            <tr><td>Headshots</td><td>${headshots}</td></tr>
+
+            <tr><td>Assists</td><td style="color:${color(assists,300,50)}">${assists}</td></tr>
+            <tr><td>Revives</td><td style="color:${color(revives,80,10)}">${revives}</td></tr>
+
+            <tr><td>Time Played</td><td>${hoursPlayed} hrs</td></tr>
+            <tr><td>Matches Per Day</td><td>${matchesPerDay}</td></tr>
+            <tr><td>Score Per Minute</td><td style="color:${color(scorePerMinute,500,250)}">${scorePerMinute}</td></tr>
+        </table>
+    `;
+}
+
+
+/* ---------------- GET STATS BUTTON ---------------- */
+document.getElementById("statsBtn").onclick = () => {
+    const username = document.getElementById("statsInput").value.trim();
+    const output = document.getElementById("statsResult");
+
+    if (!username) {
+        output.innerHTML = "<p>Please enter a username.</p>";
+        return;
+    }
+
+    if (!hasPayment) {
+        output.innerHTML = "<p>You must add a payment method before viewing stats.</p>";
+        return;
+    }
+
+    output.innerHTML = generateFakeStats(username);
+};
+
+
+/* ---------------- INITIAL LOAD ---------------- */
+renderShop(!!idToken);
+
 if (idToken) {
-    loginBtn.style.display = "none";
-    logoutBtn.style.display = "inline-block";
+    loginBtn.style.display   = "none";
+    logoutBtn.style.display  = "inline-block";
     paymentBtn.style.display = "inline-block";
-    profileSection.style.display = "block";
-    loadProfile();
+    wishlistBtn.style.display = "inline-block";
+    checkPayment();
 }
 </script>
 

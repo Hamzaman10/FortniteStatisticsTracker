@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Your Wishlist</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/config.js"></script>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">Fortnite Stats</div>
+
+    <div class="auth-buttons">
+        <a class="btn" href="/index.html">Home</a>
+        <button id="logoutBtn" class="btn" style="display:none;">Logout</button>
+    </div>
+</header>
+
+<section class="profile-container" style="margin-top:40px;">
+    <h2>Your Wishlist</h2>
+
+    <div id="wishlistGrid" class="shop-grid"></div>
+</section>
+
+<script>
+const SHOP_ITEMS = [
+    { name: "Renegade Raider", rarity: "legendary", price: 1200, img: "https://wallpapers.com/images/featured/renegade-raider-fortnite-b4fkaac8lpr4xbz1.jpg"},
+    { name: "Crystal", rarity: "rare", price: 800, img: "https://wallpapers.com/images/hd/crystal-skin-fortnite-xgtcb5maxprsbv93.jpg"},
+    { name: "Star Wand", rarity: "epic", price: 800, img: "https://wallpapers.com/images/hd/fortnite-pfp-focus-outfit-star-wand-vry0rt84td08bthu.jpg"},
+    { name: "Laugh It Up", rarity: "rare", price: 500, img: "https://i.ytimg.com/vi/6J_wsJo0-0E/maxresdefault.jpg"},
+    { name: "Driver", rarity: "uncommon", price: 500, img: "https://wallpapers.com/images/hd/fortnite-laptop-nq0zaer2qbmk5xh7.jpg"}
+];
+
+const WISHLIST_KEY = "wishlist_items";
+
+function getWishlist() {
+    return JSON.parse(localStorage.getItem(WISHLIST_KEY) || "[]");
+}
+
+function saveWishlist(list) {
+    localStorage.setItem(WISHLIST_KEY, JSON.stringify(list));
+}
+
+function renderWishlist() {
+    const list = getWishlist();
+    const grid = document.getElementById("wishlistGrid");
+
+    if (list.length === 0) {
+        grid.innerHTML = "<p style='color:#aaa; text-align:center;'>Your wishlist is empty.</p>";
+        return;
+    }
+
+    grid.innerHTML = SHOP_ITEMS
+        .filter(item => list.includes(item.name))
+        .map(item => `
+            <div class="shop-item rarity-${item.rarity}">
+                <img src="${item.img}">
+                <div class="item-name">${item.name}</div>
+                <div class="item-price">${item.price} V-Bucks</div>
+
+                <button class="wishlist-btn" onclick="removeItem('${item.name}')">
+                    ✖ Remove
+                </button>
+            </div>
+        `)
+        .join("");
+}
+
+window.removeItem = function(name) {
+    let list = getWishlist();
+    list = list.filter(x => x !== name);
+    saveWishlist(list);
+    renderWishlist();
+};
+
+document.getElementById("logoutBtn").onclick = () => {
+    localStorage.removeItem("id_token");
+    window.location.href = "/";
+};
+
+renderWishlist();
+</script>
+
+</body>
+</html>
