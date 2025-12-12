@@ -8,11 +8,7 @@ from botocore.exceptions import ClientError
 
 app = FastAPI()
 
-# ---------------------------
-# 1. THE CORS FIX
-# ---------------------------
-# We use "*" (Wildcard) + allow_credentials=False.
-# This prevents the browser from being picky about the exact URL string.
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -21,16 +17,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------------------------
-# 2. DYNAMODB SETUP
-# ---------------------------
-# Using the standard boto3 resource (works with Cloud9 credentials)
+DYNAMODB SETUP
+
+
 dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
 table = dynamodb.Table("PaymentMethods")
 
-# ---------------------------
-# Models
-# ---------------------------
+
 class CardInput(BaseModel):
     name_on_card: str
     card_number: str
@@ -39,9 +32,7 @@ class CardInput(BaseModel):
     billing_zip: str
     billing_country: str
 
-# ---------------------------
-# Routes
-# ---------------------------
+
 @app.get("/test")
 def test_route():
     return {"status": "Backend is running!"}
