@@ -12,9 +12,7 @@ Parameters:
 
 Resources:
 
-  # -------------------------
-  # Cognito User Pool
-  # -------------------------
+
   UserPool:
     Type: AWS::Cognito::UserPool
     Properties:
@@ -23,9 +21,7 @@ Resources:
       AutoVerifiedAttributes:
         - email
 
-  # -------------------------
-  # Cognito User Pool Client
-  # -------------------------
+
   UserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
@@ -45,16 +41,14 @@ Resources:
       LogoutURLs:
         - !Ref LogoutURL
 
-  # -------------------------
-  # Cognito Domain
-  # -------------------------
+
   UserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
       UserPoolId: !Ref UserPool
 
       # SHORT, VALID, NO PERSONAL NAME
-      # This keeps deployment safe and domain compliant
+
       Domain: !Sub "auth-${AWS::AccountId}-${AWS::Region}"
 
 Outputs:
