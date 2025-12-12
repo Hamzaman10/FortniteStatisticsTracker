@@ -63,7 +63,6 @@ def me(request: Request):
     token = get_bearer_token(request)
     claims = verify_token(token)
 
-    # return whatever you want here; this is just proof auth worked
     return {
         "sub": claims.get("sub"),
         "aud": claims.get("aud"),
