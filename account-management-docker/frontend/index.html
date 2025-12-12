@@ -1,93 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Fortnite Stats – Home</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="config.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fortnite Stats – Home</title>
+
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="/static/config.js"></script>
+  <script defer src="/static/index.js"></script>
 </head>
 
 <body>
-
-<header>
+  <header>
     <div class="logo">Fortnite Stats</div>
 
     <div class="auth-buttons">
-        <a id="paymentBtn" href="payment.html" class="btn" style="display:none;">Manage Payment</a>
+      <a id="paymentBtn" href="/payment.html" class="btn" style="display:none;">Manage Payment</a>
+      <a id="wishlistBtn" href="/wishlist.html" class="btn" style="display:none;">Wishlist</a>
 
-        <button id="loginBtn" class="btn">Login</button>
-        <button id="logoutBtn" class="btn" style="display:none;">Logout</button>
+      <button id="loginBtn" class="btn">Login</button>
+      <button id="logoutBtn" class="btn" style="display:none;">Logout</button>
     </div>
-</header>
+  </header>
 
-<section class="hero">
+  <section class="hero">
     <h1>Track Your Fortnite Performance</h1>
-    <p>Sign in to access personalized match stats, player history, and performance analytics.</p>
-</section>
+    <p>Sign in + have a saved payment method to see player stats.</p>
+  </section>
 
-<section id="profileSection" class="profile-container" style="display:none;">
-    <h2>Welcome back!</h2>
-    <div class="username-display">
-        Logged in as: <span id="userDisplay"></span>
+  <section id="statsSection" class="profile-container" style="display:none; margin-top:40px;">
+    <h2>Fortnite Stats</h2>
+
+    <div class="form-row" style="align-items:center; gap:10px;">
+      <input id="statsInput" type="text" placeholder="Enter an Epic username..." style="flex:1; padding:8px;">
+      <button id="statsBtn" class="btn">Get Stats</button>
     </div>
-</section>
 
-<script>
-function extractToken() {
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
-    const token = params.get("id_token");
+    <div id="statsResult" class="stats-box" style="margin-top:20px;"></div>
+  </section>
 
-    if (token) localStorage.setItem("id_token", token);
-    return token || localStorage.getItem("id_token");
-}
-
-const idToken = extractToken();
-const loginBtn = document.getElementById("loginBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-const paymentBtn = document.getElementById("paymentBtn");
-const profileSection = document.getElementById("profileSection");
-const userDisplay = document.getElementById("userDisplay");
-
-// LOGIN
-loginBtn.onclick = () => {
-    const url = `${window.APP_CONFIG.DOMAIN}/login?client_id=${window.APP_CONFIG.CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(window.APP_CONFIG.REDIRECT)}`;
-    window.location.href = url;
-};
-
-// LOGOUT
-logoutBtn.onclick = () => {
-    localStorage.removeItem("id_token");
-    const logoutUrl = `${window.APP_CONFIG.DOMAIN}/logout?client_id=${window.APP_CONFIG.CLIENT_ID}&logout_uri=${encodeURIComponent(window.APP_CONFIG.REDIRECT)}`;
-    window.location.href = logoutUrl;
-};
-
-async function loadProfile() {
-    const token = localStorage.getItem("id_token");
-    if (!token) return;
-
-    try {
-        const res = await fetch(window.APP_CONFIG.BACKEND_URL + "/profile", {
-            headers: { "Authorization": "Bearer " + token }
-        });
-
-        const data = await res.json();
-        const display = data.user_name || data.user_id || "User";
-        userDisplay.textContent = display;
-
-    } catch (e) {
-        userDisplay.textContent = "Profile unavailable";
-    }
-}
-
-if (idToken) {
-    loginBtn.style.display = "none";
-    logoutBtn.style.display = "inline-block";
-    paymentBtn.style.display = "inline-block";
-    profileSection.style.display = "block";
-    loadProfile();
-}
-</script>
-
+  <section id="shopSection" class="profile-container" style="margin-top:40px;">
+    <h2>Today's Fortnite Item Shop</h2>
+    <div id="shopGrid" class="shop-grid"></div>
+  </section>
 </body>
 </html>
