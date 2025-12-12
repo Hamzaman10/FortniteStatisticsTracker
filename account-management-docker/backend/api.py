@@ -32,7 +32,7 @@ def call_fortnite_lambda(payload: dict):
 
     data = r.json()
 
-    # Your Lambda returns: {"statusCode": 200, "body": "<json string>"}
+   
     if isinstance(data, dict) and "body" in data and isinstance(data["body"], str):
         try:
             return json.loads(data["body"])
@@ -44,16 +44,15 @@ def call_fortnite_lambda(payload: dict):
 
 @app.get("/itemshop")
 def itemshop():
-    # Works with your lambda_handler(event): mode == "itemshop"
+    
     return call_fortnite_lambda({"mode": "itemshop"})
 
 
 @app.get("/stats")
 def stats(request: Request, username: str, platform: str = "epic"):
-    # Require Cognito login for stats
+   
     token = get_token(request)
     verify_token(token)
 
-    # Works with your lambda_handler(event): mode == "stats"
-    # Also passes username/platform that your stats function expects
+
     return call_fortnite_lambda({"mode": "stats", "username": username, "platform": platform})
