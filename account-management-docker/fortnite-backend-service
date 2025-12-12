@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fortnite-backend
+  namespace: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: fortnite-backend
+  template:
+    metadata:
+      labels:
+        app: fortnite-backend
+    spec:
+      containers:
+        - name: api-server
+          image: fortnite/backend-api:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ENVIRONMENT
+              value: "production"
+            - name: LOG_LEVEL
+              value: "INFO"
