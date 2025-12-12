@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Cognito UserPool + Hosted UI for local development"
+
+Parameters:
+  CallbackURL:
+    Type: String
+    Description: "Redirect URL after login (e.g., http://localhost:5500/frontend/index.html)"
+
+  LogoutURL:
+    Type: String
+    Description: "Redirect URL after logout"
+
+Resources:
+
+  # -------------------------
+  # Cognito User Pool
+  # -------------------------
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+
+  # -------------------------
+  # Cognito User Pool Client
+  # -------------------------
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - implicit
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+      SupportedIdentityProviders:
+        - COGNITO
+      CallbackURLs:
+        - !Ref CallbackURL
+      LogoutURLs:
+        - !Ref LogoutURL
+
+  # -------------------------
+  # Cognito Domain
+  # -------------------------
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      UserPoolId: !Ref UserPool
+
+      # SHORT, VALID, NO PERSONAL NAME
+      # This keeps deployment safe and domain compliant
+      Domain: !Sub "auth-${AWS::AccountId}-${AWS::Region}"
+
+Outputs:
+
+  UserPoolId:
+    Value: !Ref UserPool
+    Description: "Cognito User Pool ID"
+
+  UserPoolClientId:
+    Value: !Ref UserPoolClient
+    Description: "Cognito App Client ID"
+
+  HostedUILoginURL:
+    Value: !Sub "https://auth-${AWS::AccountId}-${AWS::Region}.auth.${AWS::Region}.amazoncognito.com/login?client_id=${UserPoolClient}&response_type=token&redirect_uri=${CallbackURL}"
+    Description: "Hosted UI Login URL"
