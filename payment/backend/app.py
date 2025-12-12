@@ -41,9 +41,7 @@ jwks = requests.get(JWKS_URL).json()["keys"]
 
 
 def verify_token(token: str):
-    """
-    Cognito JWT validation.
-    """
+
     headers = jwt.get_unverified_header(token)
     kid = headers["kid"]
 
