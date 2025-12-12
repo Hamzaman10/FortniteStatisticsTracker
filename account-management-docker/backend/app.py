@@ -9,9 +9,6 @@ import json
 import requests
 import os
 
-# -------------------------------
-# ENVIRONMENT
-# -------------------------------
 
 REGION = os.getenv("REGION", "us-east-1")
 USERPOOL_ID = os.getenv("USERPOOL_ID")
