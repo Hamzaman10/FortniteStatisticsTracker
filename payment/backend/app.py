@@ -22,8 +22,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DYNAMODB SETUP
-
 
 dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
 table = dynamodb.Table("PaymentMethods")
@@ -73,6 +71,15 @@ def get_bearer_token(request: Request) -> str:
     return auth.replace("Bearer ", "", 1).strip()
 
 
+def validate_expiry(exp_month: int, exp_year: int):
+    if exp_month < 1 or exp_month > 12:
+        raise HTTPException(status_code=400, detail="Invalid expiration month")
+
+    now = datetime.utcnow()
+    if exp_year < now.year or (exp_year == now.year and exp_month < now.month):
+        raise HTTPException(status_code=400, detail="Card is expired")
+
+
 class CardInput(BaseModel):
     name_on_card: str
     card_number: str
@@ -110,6 +117,8 @@ def get_cards(request: Request, user_id: str):
 def save_card(request: Request, user_id: str, payload: CardInput):
     token = get_bearer_token(request)
     verify_token(token)
+
+    validate_expiry(payload.exp_month, payload.exp_year)
 
     # 1. CHECK IF USER ALREADY HAS A CARD
     try:
