@@ -24,9 +24,6 @@ if not os.path.exists(DB_FILE):
     with open(DB_FILE, "w") as f:
         json.dump({}, f)
 
-# -------------------------------
-# FASTAPI + CORS (WIDE OPEN)
-# -------------------------------
 
 app = FastAPI()
 
@@ -40,9 +37,6 @@ app.add_middleware(
 
 jwks = requests.get(JWKS_URL).json()["keys"]
 
-# -------------------------------
-# TOKEN VERIFICATION
-# -------------------------------
 
 def verify_token(token):
     headers = jwt.get_unverified_header(token)
@@ -65,10 +59,6 @@ def verify_token(token):
 
     return decoded
 
-# -------------------------------
-# DB READ/WRITE
-# -------------------------------
-
 def load_db():
     with open(DB_FILE, "r") as f:
         return json.load(f)
@@ -76,10 +66,6 @@ def load_db():
 def save_db(data):
     with open(DB_FILE, "w") as f:
         json.dump(data, f, indent=2)
-
-# -------------------------------
-# ROUTES
-# -------------------------------
 
 @app.get("/profile")
 def get_profile(request: Request):
