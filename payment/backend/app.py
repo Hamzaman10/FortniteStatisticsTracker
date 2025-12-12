@@ -22,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# DYNAMODB SETUP
+DYNAMODB SETUP
 
 
 dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
@@ -73,6 +73,15 @@ def get_bearer_token(request: Request) -> str:
     return auth.replace("Bearer ", "", 1).strip()
 
 
+def validate_expiry(exp_month: int, exp_year: int):
+    if exp_month < 1 or exp_month > 12:
+        raise HTTPException(status_code=400, detail="Invalid expiration month")
+
+    now = datetime.utcnow()
+    if exp_year < now.year or (exp_year == now.year and exp_month < now.month):
+        raise HTTPException(status_code=400, detail="Card is expired")
+
+
 class CardInput(BaseModel):
     name_on_card: str
     card_number: str
@@ -111,12 +120,7 @@ def save_card(request: Request, user_id: str, payload: CardInput):
     token = get_bearer_token(request)
     verify_token(token)
 
-    if payload.exp_month < 1 or payload.exp_month > 12:
-        raise HTTPException(status_code=400, detail="Invalid expiration month")
-
-    now = datetime.utcnow()
-    if payload.exp_year < now.year or (payload.exp_year == now.year and payload.exp_month < now.month):
-        raise HTTPException(status_code=400, detail="Card is expired")
+    validate_expiry(payload.exp_month, payload.exp_year)
 
     # 1. CHECK IF USER ALREADY HAS A CARD
     try:
@@ -125,5 +129,42 @@ def save_card(request: Request, user_id: str, payload: CardInput):
             ExpressionAttributeValues={":uid": user_id}
         )
         if existing_cards.get("Count", 0) > 0:
-            # User already has a card -> Retur
+            # User already has a card -> Return Error
+            raise HTTPException(status_code=400, detail="You can only add 1 payment method. Please delete the existing one first.")
+    except ClientError as e:
+        print(f"DB CHECK ERROR: {e}")
+        raise HTTPException(status_code=500, detail="Database check failed")
 
+    # 2. PROCEED TO SAVE IF NO CARDS EXIST
+    token = f"pay_{uuid.uuid4().hex[:12]}"
+    item = {
+        "user_id": user_id,
+        "card_token": token,
+        "last4": payload.card_number[-4:],
+        "masked": f"**** **** **** {payload.card_number[-4:]}",
+        "exp_month": payload.exp_month,
+        "exp_year": payload.exp_year,
+        "name_on_card": payload.name_on_card,
+        "billing_zip": payload.billing_zip,
+        "billing_country": payload.billing_country,
+        "created_at": datetime.utcnow().isoformat()
+    }
+
+    try:
+        table.put_item(Item=item)
+        return {"status": "saved", "token": token}
+    except ClientError as e:
+        print(f"DB SAVE ERROR: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/card")
+def delete_card(request: Request, user_id: str, card_token: str):
+    token = get_bearer_token(request)
+    verify_token(token)
+
+    try:
+        table.delete_item(Key={"user_id": user_id, "card_token": card_token})
+        return {"status": "deleted"}
+    except ClientError as e:
+        raise HTTPException(status_code=500, detail=str(e))
