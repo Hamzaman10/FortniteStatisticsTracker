@@ -22,7 +22,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DYNAMODB SETUP
 
 
 dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
